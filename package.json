@@ -1,0 +1,20 @@
+{
+  "name": "cleanframe-tv-au8100",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Gallery home screen for a Samsung AU8100 (Tizen 6.0)",
+  "scripts": {
+    "dev": "vite",
+    "typecheck": "tsc --noEmit",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "preact": "^10.27.0"
+  },
+  "devDependencies": {
+    "typescript": "^7.0.2",
+    "vite": "^8.3.5"
+  }
+}

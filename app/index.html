@@ -1,42 +1,13 @@
 <!doctype html>
 <html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>CleanFrame</title>
-<link rel="stylesheet" href="assets/fonts.css">
-<link rel="stylesheet" href="ui.css">
-</head>
-<body>
-<div class="stage" id="stage" data-view="home">
-
-  <img class="photo" id="photo" alt="" aria-hidden="true">
-  <div class="scrim" aria-hidden="true"></div>
-  <div class="grain" aria-hidden="true"></div>
-
-  <header class="head">
-    <div class="time" id="time">--:--</div>
-    <div class="date" id="date"></div>
-  </header>
-
-  <nav class="rail" id="rail" aria-label="Apps"></nav>
-  <div class="focus-name" id="focusName" aria-hidden="true"></div>
-
-  <nav class="controls" id="controls" aria-label="Home controls"></nav>
-
-  <section class="overlay" id="overlay" hidden>
-    <div class="overlay-head">
-      <h1 class="overlay-title" id="overlayTitle"></h1>
-      <p class="overlay-hint" id="overlayHint"></p>
-    </div>
-    <div class="overlay-body" id="overlayBody"></div>
-  </section>
-
-  <div class="status" id="status" role="status" aria-live="polite"></div>
-</div>
-
-<script src="assets/wallpapers/catalog.js"></script>
-<script src="device.js"></script>
-<script src="ui.js"></script>
-</body>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CleanFrame</title>
+    <script src="./assets/wallpapers/catalog.js"></script>
+    <script src="./build/index-CC5-GR3M.js"></script>
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
 </html>

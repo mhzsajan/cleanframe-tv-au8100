@@ -1,0 +1,463 @@
+/* CleanFrame — gallery home for Samsung Tizen 6.0 (Chromium 76).
+   Layout uses grid, never flex `gap`, which this engine does not support. */
+
+:root {
+  --ink: #ffffff;
+  --dim: rgba(255, 255, 255, .74);
+  --faint: rgba(255, 255, 255, .52);
+  --line: rgba(255, 255, 255, .16);
+  --t: 220ms;
+  --ease: cubic-bezier(.22, .61, .36, 1);
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: #07090b;
+  color: var(--ink);
+  font-family: Manrope, system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  font-synthesis: none;
+  cursor: none;
+}
+
+button {
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  cursor: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+}
+
+.stage {
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+}
+
+/* ---------- Art ---------- */
+
+.photo {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 620ms var(--ease);
+}
+
+.photo.is-on {
+  opacity: 1;
+}
+
+.scrim {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to bottom, rgba(4, 6, 9, .34) 0%, rgba(4, 6, 9, 0) 22%),
+    linear-gradient(to top, rgba(4, 6, 9, .74) 0%, rgba(4, 6, 9, .28) 18%, rgba(4, 6, 9, 0) 46%);
+}
+
+.tone-light .scrim {
+  background:
+    linear-gradient(to bottom, rgba(4, 6, 9, .44) 0%, rgba(4, 6, 9, 0) 24%),
+    linear-gradient(to top, rgba(4, 6, 9, .84) 0%, rgba(4, 6, 9, .40) 20%, rgba(4, 6, 9, 0) 50%);
+}
+
+/* ---------- Clock ---------- */
+
+.head {
+  position: absolute;
+  left: 96px;
+  top: 78px;
+  transition: opacity var(--t) var(--ease);
+}
+
+.time {
+  font-size: 136px;
+  line-height: .88;
+  font-weight: 400;
+  letter-spacing: -.045em;
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, .3);
+}
+
+.date {
+  margin-top: 20px;
+  font-size: 23px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* ---------- App rail ---------- */
+
+.rail {
+  position: absolute;
+  left: 88px;
+  bottom: 84px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 108px;
+  column-gap: 20px;
+  align-items: end;
+  transition: opacity var(--t) var(--ease);
+}
+
+.tile {
+  width: 108px;
+  height: 108px;
+  display: grid;
+  place-items: center;
+  opacity: .66;
+  transform: scale(.94);
+  transition: opacity 180ms linear, transform var(--t) var(--ease);
+}
+
+.tile.is-focus {
+  opacity: 1;
+  transform: scale(1.06);
+}
+
+.markbox {
+  display: grid;
+  place-items: center;
+  border-radius: 26px;
+  transition: box-shadow var(--t) var(--ease);
+}
+
+.tile .markbox {
+  width: 84px;
+  height: 84px;
+}
+
+.tile.is-focus .markbox {
+  box-shadow: 0 0 0 3px currentColor, 0 0 44px -6px currentColor;
+}
+
+.mark {
+  display: block;
+  /* The tile sets `color` to the brand colour; the mask supplies the shape. */
+  background-color: currentColor;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+.mono {
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .14);
+  font-weight: 600;
+  line-height: 1;
+}
+
+.tile .mono {
+  width: 84px;
+  height: 84px;
+  font-size: 30px;
+}
+
+.focus-name {
+  position: absolute;
+  bottom: 46px;
+  font-size: 25px;
+  font-weight: 500;
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 180ms linear, transform var(--t) var(--ease);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, .5);
+  white-space: nowrap;
+}
+
+.focus-name.is-on {
+  opacity: .95;
+  transform: none;
+}
+
+/* ---------- Controls ---------- */
+
+.controls {
+  position: absolute;
+  right: 88px;
+  bottom: 84px;
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 76px;
+  column-gap: 28px;
+  align-items: center;
+  transition: opacity var(--t) var(--ease);
+}
+
+.control {
+  width: 76px;
+  height: 76px;
+  display: grid;
+  place-items: center;
+  opacity: .74;
+  transition: opacity 180ms linear, box-shadow var(--t) var(--ease), transform var(--t) var(--ease);
+}
+
+.control svg {
+  width: 34px;
+  height: 34px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+}
+
+.control.is-focus {
+  opacity: 1;
+  transform: scale(1.04);
+  box-shadow: 0 0 0 3px #fff;
+  border-radius: 22px;
+}
+
+/* ---------- Overlays ---------- */
+
+.stage.is-overlay .head,
+.stage.is-overlay .rail,
+.stage.is-overlay .controls,
+.stage.is-overlay .focus-name {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.overlay {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  padding: 88px 96px 72px;
+  background: linear-gradient(165deg, #101a2c 0%, #090d15 55%, #05070a 100%);
+  animation: rise var(--t) var(--ease);
+}
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+.overlay-head {
+  margin-bottom: 46px;
+}
+
+.overlay-title {
+  font-size: 56px;
+  font-weight: 400;
+  letter-spacing: -.025em;
+  line-height: 1.05;
+}
+
+.overlay-hint {
+  margin-top: 10px;
+  font-size: 20px;
+  color: var(--faint);
+}
+
+.overlay-body {
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: none;
+}
+
+.overlay-body::-webkit-scrollbar {
+  display: none;
+}
+
+/* All apps */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(7, 216px);
+  column-gap: 24px;
+  row-gap: 24px;
+  padding-bottom: 24px;
+}
+
+.card {
+  width: 216px;
+  height: 196px;
+  display: grid;
+  grid-template-rows: 104px auto;
+  justify-items: center;
+  align-content: start;
+  row-gap: 12px;
+  transition: transform var(--t) var(--ease);
+}
+
+.card .markbox {
+  width: 104px;
+  height: 104px;
+}
+
+.card .mark,
+.card .mono {
+  width: 104px;
+  height: 104px;
+}
+
+.card .mono {
+  font-size: 36px;
+}
+
+.card.is-focus {
+  transform: translateY(-2px);
+}
+
+.card.is-focus .markbox {
+  box-shadow: 0 0 0 3px currentColor, 0 0 40px -8px currentColor;
+}
+
+.card .name {
+  max-width: 204px;
+  font-size: 21px;
+  font-weight: 500;
+  color: var(--dim);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color var(--t) var(--ease);
+}
+
+.card.is-focus .name {
+  color: var(--ink);
+}
+
+.card .dot {
+  margin-left: 8px;
+  font-size: 15px;
+  opacity: .5;
+}
+
+.card .dot.is-on {
+  opacity: 1;
+  color: #7CF2C8;
+}
+
+/* Background picker */
+
+.walls {
+  display: grid;
+  grid-template-columns: repeat(5, 320px);
+  column-gap: 24px;
+  row-gap: 28px;
+  padding-bottom: 24px;
+}
+
+.wall {
+  width: 320px;
+  border-radius: 18px;
+  transition: transform var(--t) var(--ease), box-shadow var(--t) var(--ease);
+}
+
+.wall img {
+  display: block;
+  width: 320px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 18px;
+}
+
+.wall .cap {
+  display: block;
+  padding-top: 12px;
+  font-size: 20px;
+  color: var(--dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wall.is-focus {
+  transform: translateY(-4px);
+  box-shadow: 0 0 0 3px #fff;
+}
+
+.wall.is-focus .cap {
+  color: var(--ink);
+}
+
+/* Settings and diagnostics */
+
+.rows {
+  display: block;
+}
+
+.row {
+  width: 100%;
+  height: 108px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+  transition: background var(--t) var(--ease), box-shadow var(--t) var(--ease);
+}
+
+.row .label {
+  font-size: 34px;
+  font-weight: 400;
+}
+
+.row .value {
+  font-size: 24px;
+  color: var(--faint);
+}
+
+.row.is-focus {
+  background: rgba(255, 255, 255, .07);
+  box-shadow: inset 3px 0 0 #7CF2C8;
+}
+
+/* ---------- Status ---------- */
+
+.status {
+  position: absolute;
+  left: 50%;
+  bottom: 40px;
+  transform: translateX(-50%);
+  font-size: 22px;
+  color: var(--dim);
+  opacity: 0;
+  transition: opacity 200ms linear;
+  pointer-events: none;
+}
+
+.status.is-on {
+  opacity: 1;
+}

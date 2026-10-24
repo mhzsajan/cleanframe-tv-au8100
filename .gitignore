@@ -1,11 +1,15 @@
-# Build output (tz pack)
-app/Debug/
-app/tizen_web_project.yaml
+# Dependencies
+node_modules/
+.npm-cache/
 
-# Signed widgets
-*.wgt
-*.tpk
+# Build output (produced by `npm run build`)
+app/
+dist/
 
-# Workspace noise
+# Tooling
+.vite/
+*.tsbuildinfo
+
+# OS
 .DS_Store
 Thumbs.db
