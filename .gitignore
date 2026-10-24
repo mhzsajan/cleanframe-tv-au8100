@@ -1,0 +1,11 @@
+# Build output (tz pack)
+app/Debug/
+app/tizen_web_project.yaml
+
+# Signed widgets
+*.wgt
+*.tpk
+
+# Workspace noise
+.DS_Store
+Thumbs.db
