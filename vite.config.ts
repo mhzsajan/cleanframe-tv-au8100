@@ -6,14 +6,15 @@ import { defineConfig, type Plugin } from 'vite';
  */
 
 /** Emit a plain classic script: a widget loads from a custom scheme where
- *  module scripts can be refused for CORS reasons. */
+ *  module scripts can be refused for CORS reasons. `defer` is essential — a
+ *  classic script in <head> otherwise runs before <body> and #root is null. */
 function classicScript(): Plugin {
   return {
     name: 'classic-script',
     enforce: 'post',
     transformIndexHtml(html) {
       return html
-        .replace(/<script type="module" crossorigin /g, '<script ')
+        .replace(/<script type="module" crossorigin /g, '<script defer ')
         .replace(/ crossorigin(?= href=)/g, '');
     },
   };
