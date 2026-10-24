@@ -32,7 +32,11 @@ html, body {
   background: #07090b;
   color: var(--ink);
   font-family: Manrope, system-ui, sans-serif;
-  -webkit-font-smoothing: antialiased;
+  /* Tizen's engine will otherwise re-scale text on its own idea of legibility. */
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  font-synthesis: none;
+  font-kerning: normal;
   cursor: none;
 }
 
@@ -76,10 +80,12 @@ html, body {
 
 .time {
   font-size: 136px;
-  line-height: .86;
-  font-weight: 200;
+  line-height: .88;
+  /* Manrope ships 400-700 here; asking for 200 made the TV clamp or synthesise it. */
+  font-weight: 400;
   letter-spacing: -.045em;
   font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1;
   text-shadow: 0 2px 24px rgba(0, 0, 0, .28);
 }
 
@@ -123,10 +129,22 @@ html, body {
   box-shadow: 0 0 0 3px rgba(255, 255, 255, .88), 0 10px 40px rgba(0, 0, 0, .34);
 }
 
-.tile .mk {
+/* Marks live in a fixed optical box so every brand reads at the same size, and so
+   the focus ring can hug the icon instead of the whole tile. */
+.markbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 24px;
+  transition: box-shadow var(--t) var(--ease);
+}
+.tile .markbox { width: 84px; height: 84px; }
+.tile.is-focus .markbox { box-shadow: 0 0 0 3px rgba(255, 255, 255, .85); }
+
+.mk {
   display: block;
-  width: 84px;
-  height: 84px;
+  width: 100%;
+  height: 100%;
   background: currentColor;
   -webkit-mask-repeat: no-repeat;
   mask-repeat: no-repeat;
@@ -135,17 +153,22 @@ html, body {
   -webkit-mask-size: contain;
   mask-size: contain;
 }
-.tile img.mk {
-  background: none;
-  object-fit: contain;
-}
+img.mk { background: none; object-fit: contain; }
 
-.tile .mono {
-  font-size: 46px;
+.mono {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, .13);
   font-weight: 600;
-  letter-spacing: -.02em;
-  opacity: .9;
+  line-height: 1;
+  letter-spacing: 0;
 }
+.tile .mono { font-size: 30px; }
+.card .mono { font-size: 36px; }
 
 .focus-name {
   position: absolute;
@@ -214,42 +237,36 @@ html, body {
   to { opacity: 1; transform: none; }
 }
 
-.overlay-head { display: flex; align-items: baseline; gap: 28px; margin-bottom: 56px; }
-.overlay-title { font-size: 56px; font-weight: 300; letter-spacing: -.025em; }
-.overlay-hint { font-size: 22px; color: var(--faint); letter-spacing: .01em; }
+.overlay-head { display: block; margin-bottom: 46px; }
+.overlay-title { font-size: 56px; font-weight: 400; letter-spacing: -.025em; line-height: 1.05; }
+/* The hint is guidance, not part of the title: its own line, smaller and dimmer. */
+.overlay-hint { margin-top: 10px; font-size: 20px; line-height: 1.3; color: var(--faint); letter-spacing: .01em; }
 
 .overlay-body { flex: 1; overflow: hidden; }
 
 /* Apps grid */
 
-.grid { display: flex; flex-wrap: wrap; gap: 20px; }
+.grid { display: flex; flex-wrap: wrap; gap: 24px; align-content: flex-start; }
 
 .card {
-  width: 236px;
-  height: 158px;
-  border-radius: 22px;
-  padding: 20px;
+  width: 216px;
+  height: 196px;
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 14px;
-  transition: background var(--t) var(--ease), box-shadow var(--t) var(--ease), transform var(--t) var(--ease);
+  align-items: center;
+  gap: 12px;
+  transition: transform var(--t) var(--ease);
 }
-.card .mk { width: 56px; height: 56px; display: block; background: currentColor;
-  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: left center;
-  mask-position: left center; -webkit-mask-size: contain; mask-size: contain; }
-.card img.mk { background: none; object-fit: contain; object-position: left center; }
-.card .mono { font-size: 42px; line-height: 56px; font-weight: 600; opacity: .9; }
-.card .name { font-size: 22px; font-weight: 500; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.card .dot { font-size: 17px; opacity: .85; }
-.card.is-focus { background: rgba(255, 255, 255, .1); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .72); }
+.card .markbox { width: 104px; height: 104px; border-radius: 26px; }
+.card.is-focus { transform: translateY(-2px); }
+.card.is-focus .markbox { box-shadow: 0 0 0 3px rgba(255, 255, 255, .85), 0 12px 34px rgba(0, 0, 0, .32); }
+.card .name {
+  font-size: 21px; font-weight: 500; color: var(--faint); text-align: center;
+  max-width: 204px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  transition: color var(--t) var(--ease);
+}
 .card.is-focus .name { color: var(--ink); }
-.card .badge {
-  position: absolute;
-  width: 22px; height: 22px;
-  border-radius: 50%;
-  background: #fff;
-}
+.card .dot { font-size: 15px; opacity: .9; }
 
 /* Wallpaper picker */
 

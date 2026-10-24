@@ -144,14 +144,17 @@
   /* ---------- marks ---------- */
 
   function markHtml(appId, cls) {
-    var a = appById(appId);
+    var a = appById(appId), inner;
     if (!a) return '';
     if (a.brand) {
       var url = ICONS + a.brand + '.svg';
-      return '<span class="mk ' + (cls || '') + '" style="-webkit-mask-image:url(' + url + ');mask-image:url(' + url + ')"></span>';
+      inner = '<span class="mk" style="-webkit-mask-image:url(' + url + ');mask-image:url(' + url + ')"></span>';
+    } else if (a.icon) {
+      inner = '<img class="mk" src="' + esc(a.icon) + '" alt="">';
+    } else {
+      inner = '<span class="mono">' + esc((a.name || '?').charAt(0)) + '</span>';
     }
-    if (a.icon) return '<img class="mk ' + (cls || '') + '" src="' + esc(a.icon) + '" alt="">';
-    return '<span class="mono">' + esc((a.name || '?').charAt(0)) + '</span>';
+    return '<span class="markbox ' + (cls || '') + '">' + inner + '</span>';
   }
 
   /* ---------- home ---------- */
@@ -292,7 +295,8 @@
     var rows = [
       { label: 'Background', value: wallMeta(S.wall).name, run: openWalls },
       { label: 'Clock', value: S.clock24 ? '24-hour' : '12-hour', run: function () { S.clock24 = !S.clock24; save(); closeOverlay(); openSettings(); } },
-      { label: 'Apps on Home', value: S.home.length + ' of ' + MAX_HOME, run: function () { openApps(true); } }
+      { label: 'Apps on Home', value: S.home.length + ' of ' + MAX_HOME, run: function () { openApps(true); } },
+      { label: 'Diagnostics', value: S.apps.length + ' apps', run: openDiagnostics }
     ];
     S.rows = rows;
     var box = document.createElement('div');
@@ -309,8 +313,32 @@
     paintOverlayFocus();
   }
 
-  function columns() { return S.view === 'apps' ? 6 : S.view === 'walls' ? 5 : 1; }
-  function cardCount() { return S.cards ? S.cards.length : 0; }
+  function openDiagnostics() {
+    openOverlay('diagnostics', 'Diagnostics', 'Back returns.');
+    var timeStyle = window.getComputedStyle(timeEl);
+    var manrope = !!(document.fonts && document.fonts.check && document.fonts.check('16px Manrope'));
+    var facts = [
+      ['Viewport', window.innerWidth + ' x ' + window.innerHeight],
+      ['Screen', screen.width + ' x ' + screen.height + ' @' + (window.devicePixelRatio || 1) + 'x'],
+      ['Manrope loaded', manrope ? 'yes' : 'NO - falling back'],
+      ['Clock font', timeStyle.fontFamily.replace(/"/g, '') + ' ' + timeStyle.fontWeight + ' ' + timeStyle.fontSize],
+      ['Installed apps', String(S.apps.length)],
+      ['Engine', (navigator.userAgent || '').replace(/^.*?\(/, '').split(')')[0]]
+    ];
+    var box = document.createElement('div');
+    box.className = 'rows';
+    for (var i = 0; i < facts.length; i++) {
+      var row = document.createElement('div');
+      row.className = 'row';
+      row.innerHTML = '<span class="label">' + esc(facts[i][0]) + '</span><span class="value">' + esc(facts[i][1]) + '</span>';
+      box.appendChild(row);
+    }
+    overlayBody.appendChild(box);
+    S.cards = box.querySelectorAll('.row');
+    paintOverlayFocus();
+  }
+
+  function columns() { return S.view === 'apps' ? 7 : S.view === 'walls' ? 5 : 1; }  function cardCount() { return S.cards ? S.cards.length : 0; }
 
   function paintOverlayFocus() {
     if (!S.cards) return;
@@ -322,7 +350,7 @@
       else el.className = el.className.replace(/\s*is-focus/, '') + (on ? ' is-focus' : '');
     }
     if (S.view === 'apps' || S.view === 'walls') {
-      var rowH = S.view === 'apps' ? 178 : 224;
+      var rowH = S.view === 'apps' ? 220 : 224;
       var body = overlayBody.clientHeight;
       var row = Math.floor(S.oi / cols), rows = Math.max(1, Math.floor(body / rowH));
       if (row < S.firstRow) S.firstRow = row;
