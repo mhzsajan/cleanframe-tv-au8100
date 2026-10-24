@@ -47,6 +47,27 @@ untouched.
 
 Keeps the app from listing itself in its own app chooser.
 
+## Further adaptation
+
+On top of the two compatibility edits above, this build makes the app behave correctly on a non-Frame
+TV and trims it slightly.
+
+**Ambient instead of Art Mode.** `art()` in `app/device.js` now launches `org.tizen.ambientapp`. The
+original `org.tizen.art-app` control only exists on The Frame, so it only ever produced an error here.
+The Home control is labelled *Ambient*.
+
+**Jellyfin and Spotify are first-class shortcuts.** Both are in `PRIMARY_APPS` (`app/main.js`) and in
+the `IDS` map (`app/device.js`) so they get brand marks rather than generic tiles. `jellyfin.svg` is
+from [Simple Icons](https://simpleicons.org) (CC0).
+
+**Wallpapers recompressed.** `scripts/optimize-wallpapers.py` re-encodes the full-size wallpapers,
+keeping the lowest JPEG quality that still reaches a 40 dB PSNR against the original, and refusing to
+write a file that grew. Result: 9.84 MB → 8.15 MB, widget 15.1 MB → 13.5 MB, with no measurable
+quality loss. Thumbnails and panels are untouched.
+
+Worth knowing: this does **not** make the app noticeably faster. The TV decodes one 1080p wallpaper
+regardless of its byte size, so the saving is install size and flash usage rather than frame rate.
+
 ## Requirements
 
 - The TV with **Developer Mode** enabled, `Host PC IP` set to this computer's LAN address.
@@ -110,9 +131,9 @@ background, clock and which apps appear.
 
 ## Known limitations
 
-- **No Art Mode.** CleanFrame's Art Mode control calls `org.tizen.art-app`, which only exists on real
-  The Frame models. On this TV that one control reports "The TV could not open this screen"; everything
-  else works.
+- **Art Mode is mapped to Ambient Mode.** The original control called `org.tizen.art-app`, which only
+  exists on real The Frame models. On this TV it now opens Samsung's Ambient Mode instead, which is the
+  equivalent screen on a non-Frame set.
 - **No Home-button replacement.** Deliberate. Taking over the Home key needs an undocumented helper
   that writes native startup/Home settings — firmware-specific and risky. Launch from Apps instead.
 - **Developer Mode should stay on.** It was already enabled on the test TV. Turning it off may withdraw
@@ -125,8 +146,8 @@ background, clock and which apps appear.
 ## Layout
 
 ```
-app/            CleanFrame v0.6.1 with the two compatibility edits
-scripts/        build / install / uninstall (PowerShell)
+app/            CleanFrame v0.6.1 with the compatibility edits above
+scripts/        build / install / uninstall (PowerShell), wallpaper optimiser (Python)
 docs/           notes from the original installation session
 LICENSE         MIT (upstream CleanFrame)
 THIRD_PARTY_NOTICES.md

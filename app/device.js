@@ -2,7 +2,8 @@
 (function () {
   'use strict';
   var IDS = {
-    stremio: 'IkWsFHtOY9.Stremio', netflix: 'org.tizen.netflix-app',
+    stremio: 'IkWsFHtOY9.Stremio', jellyfin: 'AprZAARz4r.Jellyfin',
+    spotify: 'rJeHak5zRg.Spotify', netflix: 'org.tizen.netflix-app',
     disneyplus: 'MCmYXNxgcu.DisneyPlus', youtube: '9Ur5IzDKqV.TizenYouTube',
     appletv: 'com.samsung.tv.aria-video', primevideo: 'org.tizen.primevideo',
     abciview: 'mWK87Xghap.ABCiview', sbs: 'OyE7OuxlUi.SBSOnDemand',
@@ -38,15 +39,9 @@
     if (!IDS[brand]) { done({message: 'This app has no launch target.'}); return; }
     launchApp(IDS[brand], done);
   }
-  function art(done) {
-    if (!api()) { unavailable(done); return; }
-    var finish = bounded(done);
-    try {
-      var data = [new tizen.ApplicationControlData('mode', ['fullscreen']), new tizen.ApplicationControlData('requester', ['mobile'])];
-      var control = new tizen.ApplicationControl('http://tizen.org/appcontrol/operation/default', null, null, null, data);
-      api().launchAppControl(control, 'org.tizen.art-app', function () { finish(null); }, function (err) { finish(failure(err)); });
-    } catch (err) { finish(failure(err)); }
-  }
+  /* AU8100 and other non-Frame models have no Art Mode; Samsung's Ambient Mode is the
+     equivalent screen here, so the Home control opens that instead. */
+  function art(done) { launchApp('org.tizen.ambientapp', done); }
   function home(done) { launchApp('com.samsung.tv.csfs', done); }
   function settings(done) { launchApp('com.samsung.tv.coba.setting', done); }
   function apps(done) {
