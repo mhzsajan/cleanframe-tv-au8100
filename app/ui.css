@@ -1,0 +1,297 @@
+/* CleanFrame — gallery home for Samsung Tizen.
+   One photograph, the time, and your apps. No containers, no glass, no chrome
+   beyond what a remote needs to point at. */
+
+:root {
+  --ink: #fff;
+  --dim: rgba(255, 255, 255, .62);
+  --faint: rgba(255, 255, 255, .38);
+  --line: rgba(255, 255, 255, .16);
+  --panel: rgba(10, 12, 15, .96);
+  --t: 220ms;
+  --ease: cubic-bezier(.22, .61, .36, 1);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+button {
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: inherit;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+html, body {
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: #07090b;
+  color: var(--ink);
+  font-family: Manrope, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  cursor: none;
+}
+
+.stage { position: relative; width: 1920px; height: 1080px; overflow: hidden; }
+
+/* ---------- Art ---------- */
+
+.photo {
+  position: absolute;
+  top: 0;  right: 0;  bottom: 0;  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  transition: opacity 620ms var(--ease);
+}
+.photo.is-on { opacity: 1; }
+
+.scrim {
+  position: absolute;
+  top: 0;  right: 0;  bottom: 0;  left: 0;
+  background:
+    linear-gradient(to bottom, rgba(4, 6, 9, .34) 0%, rgba(4, 6, 9, 0) 22%),
+    linear-gradient(to top, rgba(4, 6, 9, .72) 0%, rgba(4, 6, 9, .28) 18%, rgba(4, 6, 9, 0) 46%);
+  pointer-events: none;
+}
+.tone-light .scrim {
+  background:
+    linear-gradient(to bottom, rgba(4, 6, 9, .42) 0%, rgba(4, 6, 9, 0) 24%),
+    linear-gradient(to top, rgba(4, 6, 9, .82) 0%, rgba(4, 6, 9, .38) 20%, rgba(4, 6, 9, 0) 50%);
+}
+
+/* ---------- Clock ---------- */
+
+.head {
+  position: absolute;
+  left: 96px;
+  top: 78px;
+  transition: opacity var(--t) var(--ease);
+}
+
+.time {
+  font-size: 136px;
+  line-height: .86;
+  font-weight: 200;
+  letter-spacing: -.045em;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 24px rgba(0, 0, 0, .28);
+}
+
+.date {
+  margin-top: 20px;
+  font-size: 23px;
+  line-height: 1;
+  font-weight: 600;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+/* ---------- App rail ---------- */
+
+.rail {
+  position: absolute;
+  left: 88px;
+  bottom: 84px;
+  display: flex;
+  align-items: flex-end;
+  gap: 40px;
+  transition: opacity var(--t) var(--ease);
+}
+
+.tile {
+  position: relative;
+  width: 108px;
+  height: 108px;
+  border-radius: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: .52;
+  transform: scale(.94);
+  transition: opacity 180ms linear, transform var(--t) var(--ease), box-shadow var(--t) var(--ease);
+}
+.tile.is-focus {
+  opacity: 1;
+  transform: scale(1.06);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .88), 0 10px 40px rgba(0, 0, 0, .34);
+}
+
+.tile .mk {
+  display: block;
+  width: 84px;
+  height: 84px;
+  background: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+}
+.tile img.mk {
+  background: none;
+  object-fit: contain;
+}
+
+.tile .mono {
+  font-size: 46px;
+  font-weight: 600;
+  letter-spacing: -.02em;
+  opacity: .9;
+}
+
+.focus-name {
+  position: absolute;
+  bottom: 46px;
+  font-size: 25px;
+  font-weight: 500;
+  letter-spacing: .01em;
+  color: var(--ink);
+  opacity: 0;
+  transform: translateY(6px);
+  transition: opacity 180ms linear, transform var(--t) var(--ease);
+  text-shadow: 0 1px 12px rgba(0, 0, 0, .5);
+  white-space: nowrap;
+}
+.focus-name.is-on { opacity: .92; transform: translateY(0); }
+
+/* ---------- Controls ---------- */
+
+.controls {
+  position: absolute;
+  right: 88px;
+  bottom: 84px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  transition: opacity var(--t) var(--ease);
+}
+
+.control {
+  width: 76px;
+  height: 76px;
+  border-radius: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: .58;
+  transition: opacity 180ms linear, box-shadow var(--t) var(--ease), transform var(--t) var(--ease);
+}
+.control svg { width: 34px; height: 34px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+.control.is-focus {
+  opacity: 1;
+  transform: scale(1.04);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, .88);
+}
+
+/* ---------- Overlay ---------- */
+
+.stage.is-overlay .head,
+.stage.is-overlay .rail,
+.stage.is-overlay .controls,
+.stage.is-overlay .focus-name { opacity: 0; pointer-events: none; }
+
+.overlay {
+  position: absolute;
+  top: 0;  right: 0;  bottom: 0;  left: 0;
+  background: var(--panel);
+  padding: 88px 96px 72px;
+  display: flex;
+  flex-direction: column;
+  animation: rise var(--t) var(--ease);
+}
+.overlay[hidden] { display: none; }
+
+@keyframes rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: none; }
+}
+
+.overlay-head { display: flex; align-items: baseline; gap: 28px; margin-bottom: 56px; }
+.overlay-title { font-size: 56px; font-weight: 300; letter-spacing: -.025em; }
+.overlay-hint { font-size: 22px; color: var(--faint); letter-spacing: .01em; }
+
+.overlay-body { flex: 1; overflow: hidden; }
+
+/* Apps grid */
+
+.grid { display: flex; flex-wrap: wrap; gap: 20px; }
+
+.card {
+  width: 236px;
+  height: 158px;
+  border-radius: 22px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 14px;
+  transition: background var(--t) var(--ease), box-shadow var(--t) var(--ease), transform var(--t) var(--ease);
+}
+.card .mk { width: 56px; height: 56px; display: block; background: currentColor;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; -webkit-mask-position: left center;
+  mask-position: left center; -webkit-mask-size: contain; mask-size: contain; }
+.card img.mk { background: none; object-fit: contain; object-position: left center; }
+.card .mono { font-size: 42px; line-height: 56px; font-weight: 600; opacity: .9; }
+.card .name { font-size: 22px; font-weight: 500; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.card .dot { font-size: 17px; opacity: .85; }
+.card.is-focus { background: rgba(255, 255, 255, .1); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .72); }
+.card.is-focus .name { color: var(--ink); }
+.card .badge {
+  position: absolute;
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+/* Wallpaper picker */
+
+.walls { display: flex; flex-wrap: wrap; gap: 24px; }
+.wall {
+  width: 320px;
+  border-radius: 18px;
+  transition: transform var(--t) var(--ease), box-shadow var(--t) var(--ease);
+}
+.wall img { display: block; width: 320px; height: 180px; object-fit: cover; border-radius: 18px; }
+.wall .cap { padding: 14px 4px 0; font-size: 20px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.wall.is-focus { transform: translateY(-4px); box-shadow: 0 0 0 3px rgba(255, 255, 255, .88); }
+.wall.is-focus .cap { color: var(--ink); }
+
+/* Settings rows */
+
+.rows { display: flex; flex-direction: column; }
+.row {
+  height: 108px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  padding: 0 12px;
+  transition: background var(--t) var(--ease), box-shadow var(--t) var(--ease);
+}
+.row .label { font-size: 34px; font-weight: 400; letter-spacing: -.01em; }
+.row .value { font-size: 24px; color: var(--faint); }
+.row.is-focus { background: rgba(255, 255, 255, .07); box-shadow: inset 3px 0 0 rgba(255, 255, 255, .85); }
+.row.is-focus .label { color: var(--ink); }
+
+/* ---------- Status ---------- */
+
+.status {
+  position: absolute;
+  left: 50%;
+  bottom: 40px;
+  transform: translateX(-50%);
+  font-size: 22px;
+  color: var(--dim);
+  opacity: 0;
+  transition: opacity 200ms linear;
+  pointer-events: none;
+}
+.status.is-on { opacity: 1; }

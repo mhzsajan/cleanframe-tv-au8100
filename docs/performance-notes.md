@@ -1,5 +1,10 @@
 # Performance notes
 
+> **Historical.** This audit was made of the upstream CleanFrame interface (`main.js` + `style.css`),
+> which has since been replaced by the rewritten `ui.js` + `ui.css`. The TV findings still hold — cold
+> start and app switching are Tizen's, and compositing a full-screen photograph is the one appearance
+> choice with a real per-frame cost — but the file-specific observations no longer apply.
+
 What was measured before changing anything, and what the code already does well. Kept so that future
 "it feels slow" reports start from evidence instead of guesses.
 
