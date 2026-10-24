@@ -35,6 +35,32 @@ export const BRAND_COLOR: Record<string, string> = {
 
 export const INK = '#FFFFFF';
 
+/**
+ * Rendered size per mark, in px, computed from each SVG's measured ink box so
+ * every logo carries the same visual weight. Without this a wide wordmark like
+ * Prime Video renders a fraction of the size of a square mark like Jellyfin.
+ * Values are for the 112px chip; scale them for other contexts.
+ */
+export const MARK_BOX: Record<string, number> = {
+  abciview: 99,
+  applemusic: 84,
+  appletv: 96,
+  disneyplus: 90,
+  jellyfin: 88,
+  netflix: 96,
+  primevideo: 100,
+  sbs: 88,
+  spotify: 72,
+  stremio: 72,
+  youtube: 85,
+};
+
+export const DEFAULT_MARK = 88;
+
+export function markSize(brand: string, scale = 1): number {
+  return Math.round((MARK_BOX[brand] ?? DEFAULT_MARK) * scale);
+}
+
 export function colorFor(brand: string): string {
   return BRAND_COLOR[brand] ?? INK;
 }

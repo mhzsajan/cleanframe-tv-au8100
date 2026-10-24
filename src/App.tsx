@@ -1,7 +1,7 @@
 import type { ComponentChildren } from 'preact';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { listApps, launchApp, openAmbient, type TvApp } from './tizen';
-import { colorFor, markSrc, wallSrc, wallThumb, wallpaper, wallpaperList, type Wallpaper } from './data';
+import { colorFor, markSize, markSrc, wallSrc, wallThumb, wallpaper, wallpaperList, type Wallpaper } from './data';
 import { loadPrefs, savePrefs, MAX_HOME, type Prefs } from './prefs';
 
 type View = 'home' | 'apps' | 'walls' | 'settings' | 'diagnostics';
@@ -41,26 +41,17 @@ function seedHome(apps: TvApp[]): string[] {
   return home;
 }
 
-function Mark({ brand, name, size = 84 }: { brand: string; name: string; size?: number }) {
+function Mark({ brand, name, scale = 1 }: { brand: string; name: string; scale?: number }) {
+  const px = markSize(brand, scale);
   if (!brand) {
-    return (
-      <span class="markbox">
-        <span class="mono" style={{ width: `${size}px`, height: `${size}px` }}>{initials(name)}</span>
-      </span>
-    );
+    return <span class="mono" style={{ width: `${px}px`, height: `${px}px` }}>{initials(name)}</span>;
   }
+  const url = `url(${markSrc(brand)})`;
   return (
-    <span class="markbox">
-      <span
-        class="mark"
-        style={{
-          width: `${size}px`,
-          height: `${size}px`,
-          maskImage: `url(${markSrc(brand)})`,
-          WebkitMaskImage: `url(${markSrc(brand)})`,
-        }}
-      />
-    </span>
+    <span
+      class="mark"
+      style={{ width: `${px}px`, height: `${px}px`, maskImage: url, WebkitMaskImage: url }}
+    />
   );
 }
 
@@ -214,18 +205,26 @@ export function App() {
     });
   }, [view, total, overlayLength, columns]);
 
+  /* Dispatch through a ref: remote key events can arrive faster than a render,
+     and a listener bound to the previous render would act on stale state (OK
+     after a move would fire the *old* focus target). */
+  const actionRef = useRef<(action: string) => void>(() => {});
+  actionRef.current = (action: string) => {
+    if (action === 'ok') activate();
+    else if (action === 'back') back();
+    else move(action);
+  };
+
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       const action = KEY[event.keyCode];
       if (!action) return;
       event.preventDefault();
-      if (action === 'ok') activate();
-      else if (action === 'back') back();
-      else move(action);
+      actionRef.current(action);
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [activate, back, move]);
+  }, []);
 
   /* The focus name tracks the centre of the focused tile. */
   useEffect(() => {
@@ -271,7 +270,7 @@ export function App() {
             style={{ color: colorFor(app.brand) }}
             onClick={() => { setSel(index); activate(); }}
           >
-            <Mark brand={app.brand} name={app.name} />
+            <Mark brand={app.brand} name={app.name} scale={0.78} />
           </button>
         ))}
       </nav>
@@ -310,7 +309,9 @@ export function App() {
                   style={{ color: colorFor(app.brand) }}
                   onClick={() => { setCursor(index); activate(); }}
                 >
-                  <Mark brand={app.brand} name={app.name} size={104} />
+                  <span class="chip">
+                    <Mark brand={app.brand} name={app.name} />
+                  </span>
                   <span class="name">
                     {app.name}
                     {editHome && <span class={`dot ${on ? 'is-on' : ''}`}>{on ? '\u25CF' : '\u25CB'}</span>}
