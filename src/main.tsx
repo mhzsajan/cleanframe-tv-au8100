@@ -17,6 +17,12 @@ window.addEventListener('error', (event) => {
   showFatal(`${event.message}\n${event.filename}:${event.lineno}:${event.colno}`);
 });
 
+declare global {
+  interface Window {
+    __cfReady?: boolean;
+  }
+}
+
 window.addEventListener('unhandledrejection', (event) => {
   showFatal(String(event.reason));
 });
@@ -27,6 +33,9 @@ if (!root) {
 } else {
   try {
     render(<App />, root);
+    window.__cfReady = true;
+    const boot = document.getElementById('boot');
+    if (boot) boot.setAttribute('hidden', '');
   } catch (error) {
     showFatal(error instanceof Error ? `${error.message}\n${error.stack ?? ''}` : String(error));
   }

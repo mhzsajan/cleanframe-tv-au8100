@@ -5,9 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>CleanFrame</title>
     <script src="./assets/wallpapers/catalog.js"></script>
+    <style>
+      /* Inline on purpose: this must render even if the bundle never loads. */
+      html, body { margin: 0; height: 100%; background: #07090b; }
+      #boot {
+        position: fixed; top: 0; right: 0; bottom: 0; left: 0;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        font: 26px/1.6 monospace; color: #9fb3c8; text-align: center; z-index: 99999;
+        -webkit-text-size-adjust: 100%;
+      }
+      #boot b { color: #fff; font-size: 34px; font-weight: 500; }
+      #bootMsg { color: #7cf2c8; max-width: 1500px; }
+      #boot[hidden] { display: none; }
+    </style>
   </head>
   <body>
+    <div id="boot"><b>CleanFrame</b><span id="bootMsg">booting...</span></div>
     <div id="root"></div>
+    <script>
+      (function () {
+        var msg = document.getElementById('bootMsg');
+        function note(text) {
+          if (msg) msg.textContent = String(text).slice(0, 240);
+        }
+        window.addEventListener('error', function (event) {
+          var target = event.target;
+          if (target && target.tagName === 'SCRIPT') {
+            note('script failed to load: ' + String(target.src || '').split('/').pop());
+          } else {
+            note('error: ' + (event.message || 'unknown') + ' @line ' + (event.lineno || 0));
+          }
+        }, true);
+        window.addEventListener('unhandledrejection', function (event) {
+          note('promise rejected: ' + event.reason);
+        });
+        setTimeout(function () {
+          if (!window.__cfReady) note('bundle loaded but did not mount');
+        }, 4000);
+      }());
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

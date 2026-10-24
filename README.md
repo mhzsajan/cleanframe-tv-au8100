@@ -1,109 +1,104 @@
-# CleanFrame — gallery home for a Samsung AU8100
+# CleanFrame for Samsung AU8100
 
-A quiet home screen for a 2021 Samsung Crystal UHD: one photograph, the time, and your apps.
-Built for personal use on a **UA43AU8100KXXT** running **Tizen 6.0**.
+A gallery-style home screen for a 2021 Samsung Crystal UHD — one photograph, the time, and a rail of
+your apps. Built for a **UA43AU8100KXXT on Tizen 6.0**.
+
+> **Status: experimental, shelved.** It installs, launches and runs on the TV. It is not a daily
+> driver, and the reason is structural rather than cosmetic — see [Why this was shelved](#why-this-was-shelved).
+> The repository is kept because the device and engine findings below are reusable.
 
 ![Home screen](docs/images/home.jpg)
 
-This is a ground-up rewrite of [CleanFrame](https://github.com/nthnclrk/CleanFrame) by Nathan Clark,
-which was written for a 2024 The Frame. The photograph catalogue, brand marks, fonts and the Tizen
-bridge are kept from that project; the interface is new.
+## Why this was shelved
 
-> Unofficial and unaffiliated with Samsung. Use at your own risk.
+The whole value of a *home screen* is being the screen the TV lands on. Installing it as an ordinary
+app gives the opposite: Home → All apps → CleanFrame → Netflix. It replaces nothing and adds a step.
 
-## Design
+Making it the real Home screen needs the system Home app reassigned, which is an undocumented,
+firmware-specific helper. On this TV that is probably impossible anyway: `sdb` exposes only app
+operations (`ls`, `ps`, `screencapture` and friends all return nothing), so the helper the upstream
+method depends on cannot be staged or executed.
 
-- **The photograph is the interface.** No glass panels, no dock container, no card backgrounds. The
-  only chrome is a scrim faint enough to preserve the image and strong enough to hold white type.
-- **One axis.** Apps sit in a bottom-left rail; the three Home controls continue that same row to the
-  right. Arrows move, OK activates, Back does nothing on Home so you cannot fall out of it.
-- **Type does the work.** A 136px, weight-200 clock with tabular numerals, an uppercase date with wide
-  tracking, and a single 25px app name that appears only under the focused mark.
-- **Focus is a hairline.** A 3px white ring, a 1.06 scale and a lift from 52% to full opacity — legible
-  from a sofa without a block of colour over the artwork.
-- **Motion is transform and opacity only**, 180–220ms. No blur, no backdrop filter, no animated shadow:
-  this class of TV hardware has no headroom for them.
+The alternative use — an always-on art frame with a clock — is the version of this idea the TV does not
+already provide, but that is a different app (drop the rail, keep the photograph and clock).
 
-## Requirements
+## What actually works
 
-- Samsung TV with **Developer Mode** on and this computer's LAN address as **Host PC IP**.
-- Tizen Studio CLI (`tz`, `sdb`), usually at `%LOCALAPPDATA%\tizen-studio`.
-- A signing profile. The Tizen **public** distributor certificate is accepted by this TV, so no Samsung
-  account is needed.
+| Area | Result |
+| --- | --- |
+| Packaging and signing | Signed `.wgt` installs via `vd_appinstall`; launches via `execute` |
+| Home screen | Renders correctly on the TV: photograph, clock, coloured brand marks, focus ring |
+| Input | Arrows move the rail, OK launches, Back closes overlays |
+| Overlays | All apps, Background and Settings open |
+| Build | TypeScript + Preact + Vite → 30 kB bundle (12 kB gzip) |
+
+## Known issues
+
+- **All apps layout is wrong on the TV.** It is correct in desktop Chromium. The suspected cause is
+  the TV's web viewport not being the 1920×1080 the layout assumes, but this was never confirmed — see
+  the diagnostics note in [findings](docs/findings.md#unresolved-all-apps-layout).
+- **No Home-button takeover**, so it is an app, not a launcher.
+- **Art Mode is mapped to Ambient Mode** (`org.tizen.ambientapp`), since `org.tizen.art-app` only
+  exists on real The Frame models.
+- **Developer Mode must stay on.** It was already enabled on the reference TV.
 
 ## Install
+
+Requires Tizen Studio CLI (`tz`, `sdb`) and a signing profile. No Samsung account is needed — this TV
+accepts a widget signed with the **Tizen public distributor** certificate.
 
 ```powershell
 git clone https://github.com/mhzsajan/cleanframe-tv-au8100.git
 cd cleanframe-tv-au8100
 
-.\scripts\install.ps1 -TvAddress 192.168.0.7
+npm ci
+npm run build                    # tsc --noEmit && vite build  -> app\
+.\scripts\build.ps1 -SkipCompile # sign -> app\Debug\app.wgt
+.\scripts\install.ps1 -TvAddress <tv-ip>
 ```
 
-```powershell
-.\scripts\build.ps1                                  # package + sign only
-.\scripts\install.ps1 -TvAddress <ip> -SkipBuild     # install existing widget
-.\scripts\uninstall.ps1 -TvAddress <ip>
-```
-
-If PowerShell blocks unsigned scripts: `Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass`.
-
-## Using it
-
-**Home → Apps → CleanFrame.**
-
-| Where | Keys |
-| --- | --- |
-| Home | Left/Right moves along apps then controls, OK opens |
-| All apps | Arrows move, OK launches, Back returns |
-| Settings | Up/Down, OK changes, Back returns |
-| Background | Arrows pick a photograph, OK applies |
-| Apps on Home | OK adds or removes a mark (max 9), Back returns |
-
-Preferences live in `localStorage` under `cleanframe.next.v1` — background, 12/24-hour clock and the
-Home app list. Nothing is sent anywhere; the app makes no network requests.
+`.\scripts\uninstall.ps1 -TvAddress <tv-ip>` removes it. It takes the **app ID** (`CfrHome001.Home`),
+not the package ID.
 
 ## Development
 
-The whole interface is three files, no build step and no framework:
-
-```
-app/index.html    markup skeleton
-app/ui.css        design tokens and layout
-app/ui.js         state, rendering and remote navigation (ES5)
-app/device.js     the only file that talks to Tizen
-app/assets/       photographs, brand marks, fonts
-```
-
-Preview in a browser at TV resolution — the harness stubs `window.tizen` so the app runs without a TV:
-
 ```powershell
-node tools/shot.mjs dist/shots     # from the workspace root; writes 1920x1080 PNGs
+npm run dev        # Vite dev server with HMR on port 4796 (no TV APIs; use it for layout)
+npm run build      # type-check + bundle to app\
+npm run typecheck
 ```
 
-Architecture, tokens and extension points are documented in [docs/design.md](docs/design.md).
+```
+src/tizen.ts      typed bridge: app list, launch, Ambient
+src/data.ts       wallpaper catalogue, brand colours, optical mark sizes
+src/prefs.ts      persisted preferences (localStorage, cleanframe.v2)
+src/App.tsx       component tree
+src/styles.css    design system
+public/           config.xml, photographs, brand marks, fonts
+```
 
-## Notes from this TV
+In a browser the TV APIs are absent, so the app list is empty. `tools/probe.mjs` (in the parent
+workspace, not this repo) stubs `window.tizen` and screenshots the result at 1920×1080.
 
-| Finding | Detail |
-| --- | --- |
-| Package ID | Must be exactly **10 alphanumeric characters**; a shorter one fails with `install failed[118, -19], reason: Parsing error` |
-| Tizen version | `platform_version: 6.0`, so a widget declaring `required_version="6.5"` is rejected |
-| Signing | Tizen public distributor works; the Samsung certificate flow is unnecessary |
-| Engine | Avoid `inset`, `:has()`, `clamp()` and flex `gap` assumptions — it is older than desktop Chromium |
-| Shell access | `sdb shell 0 <command>` works for app operations; `ps`/`ls` are restricted |
+## Findings
 
-## Known limitations
+Everything learned about this TV — signing, the Tizen CLI, SDB quirks, engine limits and the bugs that
+cost the most time — is written up in **[docs/findings.md](docs/findings.md)**. Architecture notes are
+in [docs/design.md](docs/design.md).
 
-- **No Art Mode.** The Ambient control opens Samsung's Ambient Mode (`org.tizen.ambientapp`), which is
-  the equivalent screen on a non-Frame TV.
-- **No Home-button takeover.** Deliberate: launch from Apps. Native Home reassignment is an
-  undocumented, firmware-specific hack.
-- **Developer Mode should stay on.** It was already enabled on this TV.
-- **Firmware updates** can change signing or launch behaviour; reinstall after one.
+Short version:
 
-## Licence
+- Package IDs must be **exactly 10 characters** or install fails with `[118, -19] Parsing error`.
+- `required_version` above the TV's Tizen version is rejected outright.
+- The engine is Chromium-76 class: no flex `gap`, no `inset`, and ES modules can fail on a
+  `wgt-package://` origin — use a classic script **with `defer`**.
+- Manrope is declared 400–700; asking for 200/300 makes the TV clamp or synthesise the weight.
 
-Interface, photographs and fonts come from the CleanFrame project and keep their terms — see
-[LICENSE](LICENSE) and [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Brand marks are from
-[Simple Icons](https://simpleicons.org) (CC0) and the CleanFrame icon set. `jellyfin.svg` was added here.
+## Credits and licence
+
+Interface, photographs and fonts come from [CleanFrame](https://github.com/nthnclrk/CleanFrame) by
+Nathan Clark. Original code is MIT (see [LICENSE](LICENSE)); fonts, photographs and brand marks keep
+their own terms — see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). `jellyfin.svg` added here, from
+Simple Icons (CC0).
+
+Independent project. Not affiliated with Samsung, and not maintained by the upstream author.

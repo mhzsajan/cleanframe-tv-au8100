@@ -1,99 +1,113 @@
 # Design and architecture
 
-How the interface is put together, so it can be extended without reading all of `ui.js`.
+How the app is put together, and where to extend it.
 
-## Files
+## Stack
+
+| Layer | Choice | Why |
+| --- | --- | --- |
+| Language | TypeScript, `strict` | Types on the Tizen bridge and state |
+| UI | Preact 10 + hooks | ~4 kB runtime; React-sized APIs without React's weight |
+| Build | Vite 8 (rolldown), `target: chrome76` | The TV's engine is Chromium-76 class |
+| Output | Single IIFE bundle, classic `<script defer>` | ES modules can fail on a `wgt-package://` origin |
+| Packaging | `tz pack` after the build | Samsung's packager and signer |
+
+`npm run build` runs `tsc --noEmit` first, so a type error fails the build before bundling.
+
+## Source map
 
 | File | Responsibility |
 | --- | --- |
-| `app/index.html` | Static skeleton: photo, scrim, clock, rail, controls, one overlay container |
-| `app/ui.css` | Design tokens, layout, overlay styles. No framework, no preprocessor |
-| `app/ui.js` | State, rendering, remote navigation. ES5, one IIFE |
-| `app/device.js` | Tizen bridge: launch, app list, Ambient, Samsung Home/settings |
-| `app/assets/wallpapers/catalog.js` | `window.CleanFrameWallpapers`: id, name, tone per photograph |
-| `app/assets/icons/*.svg` | Brand marks, used as CSS masks |
+| `src/tizen.ts` | The only module that touches `window.tizen`: `listApps`, `launchApp`, `openAmbient` |
+| `src/data.ts` | Wallpaper catalogue, brand colours, optical mark sizes (`MARK_BOX`) |
+| `src/prefs.ts` | `localStorage` persistence under `cleanframe.v2` |
+| `src/App.tsx` | State, keyboard handling and all components |
+| `src/styles.css` | Design tokens and layout |
+| `public/` | `config.xml`, photographs, brand SVGs, fonts — copied verbatim into the build |
 
 ## State
 
-One object, `S`:
+One `App` component holds everything:
 
-```js
-{
-  wall, clock24, home,   // persisted to localStorage under cleanframe.next.v1
-  apps,                  // catalogue from FrameDevice.apps()
-  view,                  // 'home' | 'apps' | 'walls' | 'settings'
-  sel,                   // home focus index: apps first, then controls
-  oi, firstRow,          // overlay focus index and scroll offset
-  edit                   // All apps opened as "Apps on Home"
-}
+```ts
+view     'home' | 'apps' | 'walls' | 'settings' | 'diagnostics'
+sel      focus index on Home: app rail first, then the three controls
+cursor   focus index inside an overlay
+prefs    { wall, clock24, home[] }   persisted
+apps     catalogue from the TV
+editHome whether All apps is in "apps on Home" mode
 ```
 
-`sel` is a single index across `home.length + CONTROLS.length`. App marks occupy `0..home.length-1`,
-the three controls follow. That is why moving right off the last app lands on Ambient — one axis, no
-separate vertical zone.
+`sel` spans `rail.length + 3`, so Home is a single horizontal axis: arrows move from apps straight onto
+Ambient / All apps / Settings. There is no vertical zone to get lost in.
 
-## Rendering
+## Input
 
-There is no virtual DOM and no per-frame work. `renderRail()` and `renderControls()` rebuild their
-innerHTML from `S`; they run only on focus changes, app-list arrival and overlay open/close. Overlays
-are built once when opened, then `paintOverlayFocus()` only toggles the `is-focus` class, so moving in
-a 60-app grid never rebuilds an element or re-decodes an image.
+Key codes map to `left/right/up/down/ok/back`. The listener is attached **once** and dispatches through
+`actionRef.current`, which always holds the latest handler:
 
-The photograph fades in once per change: `paintWall()` sets `img.src` on a detached `Image`, and only
-assigns it to the `<img>` on `onload`, so there is no flash of the old frame.
-
-`applyTone()` sets `tone-light` on the stage when the catalogue marks a photograph as bright; the
-scrim has a stronger variant for those. This is a per-photo decision made offline, not runtime pixel
-analysis.
-
-## Adding things
-
-**A photograph.** Drop `<id>.jpg` (1920×1080), `<id>-thumb.jpg` (512px) and `<id>-panel.jpg` into
-`app/assets/wallpapers/`, then add `{ id, name, tone }` to `catalog.js`. `tone: 'light'` selects the
-stronger scrim. Nothing else is needed — the picker reads the catalogue.
-
-**A brand mark.** Add `app/assets/icons/<brand>.svg` and map the app ID to that brand in `device.js`'s
-`IDS`. The mark is painted as a CSS mask in `currentColor`, so the SVG's own fill is ignored and only
-its alpha matters. Without a brand or a TV icon the rail falls back to a letter monogram.
-
-**An overlay.** Add a branch to `openOverlay(view, title, hint)`, build the DOM once into
-`overlayBody`, set `S.cards`, then call `paintOverlayFocus()`. Navigation is generic: `columns()`
-returns the grid width, and `moveOverlay()` steps by one or by a whole row. Add the view to
-`activateOverlay()` and, if it should return somewhere specific, to `back()`.
-
-**A Home control.** Add an entry to `CONTROLS` with a `name`, an SVG path in `SVG`, and a `run`
-handler. It appears automatically and joins the focus order after the app rail.
-
-## Tokens
-
-```
---ink     #fff                    text at full strength
---dim     rgba(255,255,255,.62)   supporting text
---faint   rgba(255,255,255,.38)   hints and values
---t       220ms                   all movement
---ease    cubic-bezier(.22,.61,.36,1)
+```ts
+const actionRef = useRef<(action: string) => void>(() => {});
+actionRef.current = (action) => { /* uses current state */ };
+useEffect(() => { window.addEventListener('keydown', onKey); }, []);
 ```
 
-Type: clock `136px / 200 / -.045em`, overlay title `56px / 300 / -.025em`, row label `34px`,
-app name `25px / 500`, card name `22px`, hint `22px` in `--faint`. Margins are multiples of 4, with a
-96px safe area at the top and 88px at the sides.
+This matters: binding the listener per render means a fast Right-then-OK acts on the previous focus and
+opens the wrong thing. That bug cost a whole install cycle.
 
-## Constraints worth respecting
+Back is deliberately a no-op on Home, so you cannot fall out of the screen by accident.
 
-- **ES5 only** in `ui.js`: no `const`/`let`, arrow functions, template literals or `class`. The TV's
-  engine is older than desktop Chromium.
-- **No `inset` shorthand** in CSS, and do not rely on `:has()`, `clamp()` or flex `gap` for anything
-  load-bearing. Use `top/right/bottom/left`.
-- **Transform and opacity only** for motion. `backdrop-filter` and animated `box-shadow` are what make
-  these TVs drop frames.
-- **Never rebuild an overlay on focus move.** Toggle classes.
+## Overlays
 
-## Preview
+One overlay component renders a title, a hint and a body. Grid navigation is generic: each view declares
+its column count (apps 7, walls 5, settings and diagnostics 1) and the cursor steps by one or by a whole
+row. Focus is applied by class, never by rebuilding the grid, so moving across 60 apps does not
+re-create any element.
 
-```powershell
-node tools/shot.mjs dist/shots
+The focused element is scrolled into view with `scrollIntoView({ block: 'nearest' })`.
+
+## Design tokens
+
+```
+--ink    #ffffff          primary text
+--dim    rgba(255,255,255,.74)
+--faint  rgba(255,255,255,.52)
+--t      220ms            all movement
+--ease   cubic-bezier(.22,.61,.36,1)
 ```
 
-Serves `app/` on loopback, opens Chromium at 1920×1080 and writes PNGs for the home screen and each
-overlay. It injects a `window.tizen` stub with a representative app list, because `device.js` expects a
-TV. The same stub is the place to fake new app IDs when testing catalogue changes.
+Type: clock `136px/400` with `-.045em` tracking and tabular numerals; overlay title `56px/400`; app name
+`20–25px/500`; row label `34px`. Margins are multiples of 4, with a 96px top and 88px side safe area.
+
+## Marks and colour
+
+Brand SVGs are single-colour, so each is used as a CSS mask and coloured by `color` on its container:
+
+```css
+.mark { background-color: currentColor; -webkit-mask-image: url(...); }
+```
+
+`src/data.ts` holds the colour map and `MARK_BOX`, the per-brand render size derived from measured ink
+bounds so every logo carries equal visual weight. `color: <brand>` on the tile or card also colours the
+focus ring, which is why Netflix focuses red and Spotify green.
+
+Apps with no bundled mark fall back to a monogram chip. **The TV's own icon files are never used** —
+they vary in size and resolution and made the grid look inconsistent.
+
+## To extend
+
+**A wallpaper.** Add `<id>.jpg` (1920×1080) and `<id>-thumb.jpg` to `public/assets/wallpapers/`, then add
+`{ id, name, tone }` to that folder's `catalog.js`. `tone: 'light'` selects the stronger scrim.
+
+**A brand mark.** Add `public/assets/icons/<brand>.svg`, map the app ID to the brand in
+`src/tizen.ts`'s `KNOWN`, and add its colour and `MARK_BOX` size in `src/data.ts`.
+
+**A Home control.** Add an entry to the control array in `App.tsx` with a name, an SVG path and a
+handler; it joins the focus axis automatically.
+
+## Constraints to keep
+
+- No flex `gap`, no `inset`, no `:has()`, no `aspect-ratio` — see [findings](findings.md#web-engine-limits).
+- Motion is `transform` and `opacity` only; no `backdrop-filter`, no animated `box-shadow`.
+- Write source files as UTF-8. A PowerShell `Set-Content` round-trip once turned `styles.css` into ANSI
+  and the bundler rejected it with a misleading error.
