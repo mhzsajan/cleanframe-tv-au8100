@@ -98,7 +98,7 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .shelf.fade-l.fade-r{-webkit-mask-image:linear-gradient(to right,rgba(0,0,0,.2),#000 132px,#000 calc(100% - 132px),rgba(0,0,0,.2));mask-image:linear-gradient(to right,rgba(0,0,0,.2),#000 132px,#000 calc(100% - 132px),rgba(0,0,0,.2))}
 .track{position:absolute;left:0;top:0;height:232px;transition:transform var(--t) var(--ease);will-change:transform}
 .plate{position:absolute;left:0;top:16px;width:288px;height:200px;border-radius:32px;opacity:0;transition:transform var(--t) var(--ease),opacity 120ms linear;will-change:transform}
-.plate.on-focus{opacity:1;background:var(--plate);box-shadow:var(--plate-edge)}
+.plate.on-focus{opacity:1;background:transparent;box-shadow:inset 0 0 0 3px rgba(255,255,255,.82),0 0 0 1px rgba(10,14,18,.28),0 12px 38px rgba(6,10,14,.26)}
 .plate.on-sel{opacity:1;background:rgba(255,255,255,.11)}
 .plate.on-lift{opacity:1;background:var(--lift);box-shadow:var(--plate-edge)}
 .m-frost .dock .plate.on-focus{background:linear-gradient(170deg,rgba(255,255,255,.26),rgba(255,255,255,.08) 58%,rgba(255,255,255,.10))}
@@ -115,7 +115,12 @@ html,body{width:100%;height:100%;overflow:hidden;background:#000}
 .native-icon img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
 .native-icon.has-native-icon>span{visibility:hidden}
 .tile .mark{position:absolute;left:84px;top:34px;opacity:.84;transition:opacity 160ms linear,transform var(--t) var(--ease)}
-.tile .label{position:absolute;left:4px;right:4px;top:128px;text-align:center;font-size:36px;line-height:44px;letter-spacing:-.8px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.84;transition:opacity 160ms linear}
+.tile .label{position:absolute;left:4px;right:4px;top:128px;text-align:center;font-size:36px;line-height:44px;letter-spacing:-.8px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;opacity:.84;transition:opacity 160ms linear;text-shadow:0 1px 2px rgba(0,0,0,.55),0 6px 18px rgba(0,0,0,.35)}
+/* Neighbouring tiles peek in at the shelf edge. Their mark is a useful cue; a half-clipped
+   word is not, so the label is dropped and the mark dimmed instead. */
+.tile.is-partial .label{opacity:0}
+.tile.is-partial .mark{opacity:.5}
+.tile.is-partial.is-focus .label{opacity:0}
 .tile .t-name{position:absolute;left:12px;right:12px;top:72px;text-align:center;font-size:40px;line-height:56px;letter-spacing:-1px;font-weight:600;white-space:nowrap;overflow:hidden;opacity:.84;transition:opacity 160ms linear}
 .tile.is-focus .mark,.tile.is-focus .label,.tile.is-focus .t-name,.tile.is-lifted .mark,.tile.is-lifted .label,.tile.is-lifted .t-name{opacity:1}
 .tile.is-focus .mark,.tile.is-lifted .mark{transform:translateY(-3px) scale(1.04)}

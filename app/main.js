@@ -9,7 +9,7 @@
   /* ---------- Bundled data ---------- */
   var ASSETS = 'assets/', ICONS = ASSETS + 'icons/', WP = ASSETS + 'wallpapers/';
   var CAP = 9, SCRIM_Y = 560;
-  var DOCK_MODES = { both: { tw: 288, th: 200, pitch: 296 }, text: { tw: 288, th: 104, pitch: 296 }, icons: { tw: 176, th: 144, pitch: 184 } };
+  var DOCK_MODES = { both: { tw: 288, th: 200, pitch: 296 }, text: { tw: 288, th: 104, pitch: 296 }, icons: { tw: 208, th: 152, pitch: 232 } };
   var GRID_ROW = 240, GRID_COL = 344, COLS = 5;
   var ED_ROW = 80, ED_SEP = 56, ED_VIEW = 752, STRIP_PITCH = 188;
   var PH_TOP = 220, PH_PITCH = 128, PH_FULL = 5, PH_HEIGHT = 944, PH_COMPACT_TOP = 144, PH_COMPACT_PITCH = 88, PH_COMPACT_VISIBLE = 9;
@@ -334,6 +334,10 @@
   }
   function clean(saved) {
     var s = saved && typeof saved === 'object' ? saved : {}, modern = s.look && typeof s.look === 'object' ? s.look : s;
+    /* One-time appearance migration: icon-only dock and icon-only Home controls, with the
+       focused app's name shown beneath the dock. Existing installs keep their wallpaper,
+       layout and app order; the stamp means later user choices win. */
+    var design = s.design === 'cfg2';
     var legacyList = s.theme === 'list', h = [], recent = [], records = Array.isArray(s.appRecords) ? s.appRecords : [];
     records.slice(0, 256).forEach(function (a) {
       if (!a || !safeId(a.id) || !safeId(a.appId) || typeof a.name !== 'string' || !a.name.trim() || app(a.id)) return;
@@ -348,7 +352,8 @@
     (Array.isArray(s.recent) ? s.recent : []).forEach(function (id) { if (safeId(id) && app(id) && h.indexOf(id) < 0 && recent.indexOf(id) < 0 && recent.length < 5) recent.push(id); });
     return {
       bg: pick(modern.bg, LOOK_VALUES.bg, legacyList ? 'dark' : 'photo'), layout: pick(modern.layout, LOOK_VALUES.layout, legacyList ? 'list' : 'dock'),
-      apps: pick(modern.apps, LOOK_VALUES.apps, legacyList ? 'text' : 'both'), controls: pick(modern.controls, LOOK_VALUES.controls, 'both'),
+      apps: design ? pick(modern.apps, LOOK_VALUES.apps, legacyList ? 'text' : 'both') : 'icons',
+      controls: design ? pick(modern.controls, LOOK_VALUES.controls, 'both') : 'icons',
       focus: pick(modern.focus, LOOK_VALUES.focus, legacyList ? 'type' : 'glass'), material: pick(modern.material, LOOK_VALUES.material, 'soft'),
       font: pick(modern.font, LOOK_VALUES.font, 'manrope'), wall: wall(modern.wall || s.wallpaper) ? modern.wall || s.wallpaper : WALLS[0].id,
       home: h, recent: recent, lastApp: h.indexOf(s.lastApp) >= 0 ? s.lastApp : h[0],
@@ -358,7 +363,7 @@
   function serialise(c) {
     var out = {}, id;
     Object.keys(c).forEach(function (key) { out[key] = c[key]; });
-    out.version = 2; out.look = lookOf(c); out.dock = c.home.slice(); out.wallpaper = c.wall;
+    out.version = 2; out.design = 'cfg2'; out.look = lookOf(c); out.dock = c.home.slice(); out.wallpaper = c.wall;
     out.theme = c.layout === 'list' ? 'list' : 'shore';
     out.appRecords = [];
     c.home.concat(c.recent).forEach(function (key) {
@@ -1160,7 +1165,7 @@
     var m = DOCK_MODES[S.c.apps], vis = Math.max(1, Math.min(5, n)), shelfW = vis * m.pitch - 8, w = shelfW + 32;
     var broad = S.geom === 'broad' && n > 5;
     if (n < 0) { w = 912; shelfW = 880; }
-    else if (broad) { w = 1728; shelfW = 1696; }
+    else if (broad) { var bvis = S.c.apps === 'icons' ? 7 : 5; w = bvis * m.pitch + 24; shelfW = w - 32; }
     return { x: Math.round((1920 - w) / 2), y: 908 - m.th - 32, h: m.th + 32, w: w, shelf: shelfW, vis: vis, broad: broad, empty: n < 0, tw: m.tw, th: m.th, pitch: m.pitch };
   }
   /* Five centred: the window moves one tile when focus passes an edge. Broad: keep a

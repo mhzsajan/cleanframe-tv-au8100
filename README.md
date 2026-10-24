@@ -68,6 +68,17 @@ quality loss. Thumbnails and panels are untouched.
 Worth knowing: this does **not** make the app noticeably faster. The TV decodes one 1080p wallpaper
 regardless of its byte size, so the saving is install size and flash usage rather than frame rate.
 
+**Appearance pass.** The default look is now icons-only: the dock shows brand marks with the focused
+app's name beneath it, and the Home controls are icon-only. The focus plate became a hairline ring
+instead of a filled panel, and the dock shows seven marks with breathing room rather than nine
+edge-to-edge. Peek tiles at the shelf edge drop their label, which used to clip mid-word against the
+fade. `.is-partial` had been applied by the renderer but never had a CSS rule.
+
+![Home screen](docs/images/home-dock.jpg)
+
+Existing installations migrate once via a `design: cfg2` stamp: wallpaper, layout and app order are
+kept, and the appearance settings remain yours to change afterwards.
+
 ## Requirements
 
 - The TV with **Developer Mode** enabled, `Host PC IP` set to this computer's LAN address.
